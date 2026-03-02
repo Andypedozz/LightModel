@@ -1,5 +1,4 @@
-import { db, query, tableExists } from '../config/database.js';
-import { query as queryUtils } from '../db/db_utils.js';
+import { query } from '../db/db_utils.js';
 import { validateFieldValue, processFieldValue } from '../utils/schemaGenerator.js';
 
 // Middleware per caricare la definizione della risorsa
@@ -8,7 +7,7 @@ export async function loadResourceDefinition(req, res, next) {
     const { resource } = req.params;
     
     // Cerca definizione nel database
-    const definitions = await queryUtils(db, `
+    const definitions = await query(db, `
       SELECT * FROM resource_definitions WHERE plural_name = ?
     `, [resource]);
     
@@ -69,10 +68,10 @@ export async function getAll(req, res, next) {
     values.push(parseInt(limit), offset);
     
     // Esegui query
-    const results = await queryUtils(db, sql, values);
+    const results = await query(db, sql, values);
     
     // Conteggio totale
-    const countResult = await queryUtils(db, `
+    const countResult = await query(db, `
       SELECT COUNT(*) as total FROM ${tableName}
     `);
     
@@ -96,7 +95,7 @@ export async function getOne(req, res, next) {
     const { tableName, resourceDefinition } = req;
     const { id } = req.params;
     
-    const results = await queryUtils(db, `
+    const results = await query(db, `
       SELECT * FROM ${tableName} WHERE id = ?
     `, [id]);
     
@@ -155,10 +154,10 @@ export async function create(req, res, next) {
       VALUES (${placeholders})
     `;
     
-    const result = await queryUtils(db, sql, values);
+    const result = await query(db, sql, values);
     
     // Recupera l'elemento creato
-    const newItem = await queryUtils(db, `
+    const newItem = await query(db, `
       SELECT * FROM ${tableName} WHERE id = ?
     `, [result.lastInsertRowid]);
     
@@ -176,7 +175,7 @@ export async function update(req, res, next) {
     const data = req.body;
     
     // Verifica esistenza
-    const existing = await queryUtils(db, `
+    const existing = await query(db, `
       SELECT * FROM ${tableName} WHERE id = ?
     `, [id]);
     
@@ -215,10 +214,10 @@ export async function update(req, res, next) {
       WHERE id = ?
     `;
     
-    await queryUtils(db, sql, values);
+    await query(db, sql, values);
     
     // Recupera elemento aggiornato
-    const updated = await queryUtils(db, `
+    const updated = await query(db, `
       SELECT * FROM ${tableName} WHERE id = ?
     `, [id]);
     
@@ -234,7 +233,7 @@ export async function remove(req, res, next) {
     const { tableName } = req;
     const { id } = req.params;
     
-    const result = await queryUtils(db, `
+    const result = await query(db, `
       DELETE FROM ${tableName} WHERE id = ?
     `, [id]);
     

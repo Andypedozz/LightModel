@@ -1,7 +1,6 @@
 import { db } from '../db/db.js';
 import { query, tableExists } from '../db/db_utils.js';
 
-
 // Ri-esporta le funzioni per comodità
 export { db, query, tableExists };
 
@@ -9,8 +8,8 @@ export { db, query, tableExists };
 export async function createResourceTable(tableName, fields) {
   console.log(`Creazione tabella: ${tableName}`);
   
-  const tableExists = await tableExists(db, tableName);
-  if (tableExists) {
+  const tableExistss = await tableExists(db, tableName);
+  if (tableExistss) {
     console.log(`Tabella ${tableName} già esistente`);
     return;
   }
