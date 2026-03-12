@@ -77,6 +77,5 @@ export async function registerEntityRoutes(app) {
 
             res.json({ success: true })
         })
-
     }
 }
