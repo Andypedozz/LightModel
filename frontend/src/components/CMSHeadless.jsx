@@ -31,15 +31,18 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
   const textMuted = darkMode ? 'text-gray-400' : 'text-gray-500';
 
   return (
-    <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-auto bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300">
       <div 
         ref={modalRef}
-        className={`${modalBg} rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto`}
+        className={`${modalBg} rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100 border ${borderColor}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`sticky top-0 ${modalBg} border-b ${borderColor} px-6 py-4 flex justify-between items-center`}>
+        <div className={`sticky top-0 ${modalBg} border-b ${borderColor} px-6 py-4 flex justify-between items-center backdrop-blur-sm bg-opacity-90`}>
           <h3 className={`text-lg font-semibold ${textColor}`}>{title}</h3>
-          <button onClick={onClose} className={`${textMuted} hover:${darkMode ? 'text-gray-300' : 'text-gray-600'} text-xl`}>
+          <button 
+            onClick={onClose} 
+            className={`${textMuted} hover:${darkMode ? 'text-gray-300' : 'text-gray-600'} text-xl p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+          >
             ✕
           </button>
         </div>
@@ -269,8 +272,8 @@ const CMSHeadless = () => {
   const renderFormField = (field) => {
     const value = formData[field.slug] || '';
     const inputClass = darkMode 
-      ? 'w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
-      : 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500';
+      ? 'w-full px-4 py-2.5 border border-gray-600 bg-gray-700/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200'
+      : 'w-full px-4 py-2.5 border border-gray-200 bg-white/50 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200';
 
     switch (field.type) {
       case 'text':
@@ -309,12 +312,12 @@ const CMSHeadless = () => {
       
       case 'boolean':
         return (
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
             <input
               type="checkbox"
               checked={value || false}
               onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.checked })}
-              className="rounded text-blue-500"
+              className="w-5 h-5 rounded-md text-blue-500 focus:ring-blue-500/30 transition-all"
             />
             <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sì</span>
           </label>
@@ -322,11 +325,14 @@ const CMSHeadless = () => {
       
       case 'media':
         return (
-          <div className={`border-2 border-dashed ${darkMode ? 'border-gray-600' : 'border-gray-300'} rounded-lg p-4 text-center`}>
-            <button type="button" className={`${darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'} px-4 py-2 rounded-lg text-sm`}>
-              Seleziona Media
-            </button>
-            {value && <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>File selezionato: {value}</p>}
+          <div className={`border-2 border-dashed ${darkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'} rounded-xl p-6 text-center transition-all cursor-pointer group`}>
+            <div className="flex flex-col items-center space-y-2">
+              <span className="text-4xl group-hover:scale-110 transition-transform">📁</span>
+              <button type="button" className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} px-4 py-2 rounded-lg text-sm font-medium transition-all`}>
+                Seleziona Media
+              </button>
+              {value && <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>File selezionato: {value}</p>}
+            </div>
           </div>
         );
       
@@ -374,94 +380,100 @@ const CMSHeadless = () => {
 
   // Sidebar navigation items
   const navItems = [
-    { id: 'entities', label: 'Entità', icon: '📊', count: entities.length },
-    { id: 'content', label: 'Contenuti', icon: '📄' },
-    { id: 'media', label: 'Media', icon: '🖼️', count: media.length },
-    { id: 'users', label: 'Utenti & Ruoli', icon: '👥' },
-    { id: 'api', label: 'API & Webhooks', icon: '🔌' },
-    { id: 'activity', label: 'Attività', icon: '📋' },
-    { id: 'settings', label: 'Impostazioni', icon: '⚙️' },
+    { id: 'entities', label: 'Entità', icon: '📊', count: entities.length, gradient: 'from-blue-500 to-blue-600' },
+    { id: 'content', label: 'Contenuti', icon: '📄', gradient: 'from-green-500 to-green-600' },
+    { id: 'media', label: 'Media', icon: '🖼️', count: media.length, gradient: 'from-purple-500 to-purple-600' },
+    { id: 'users', label: 'Utenti & Ruoli', icon: '👥', gradient: 'from-yellow-500 to-yellow-600' },
+    { id: 'api', label: 'API & Webhooks', icon: '🔌', gradient: 'from-red-500 to-red-600' },
+    { id: 'activity', label: 'Attività', icon: '📋', gradient: 'from-indigo-500 to-indigo-600' },
+    { id: 'settings', label: 'Impostazioni', icon: '⚙️', gradient: 'from-gray-500 to-gray-600' },
   ];
 
   // Badge component with dark mode support
   const Badge = ({ type, value }) => {
     const colors = {
       status: {
-        published: darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800',
-        draft: darkMode ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800',
-        archived: darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800',
+        published: darkMode ? 'bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-300 border-green-500/30' : 'bg-gradient-to-r from-green-50 to-green-100 text-green-700 border-green-200',
+        draft: darkMode ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 text-yellow-300 border-yellow-500/30' : 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-700 border-yellow-200',
+        archived: darkMode ? 'bg-gradient-to-r from-gray-500/20 to-gray-600/20 text-gray-300 border-gray-500/30' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200',
       },
       role: {
-        Admin: darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-800',
-        Editor: darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800',
-        Viewer: darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800',
+        Admin: darkMode ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-300 border-purple-500/30' : 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 border-purple-200',
+        Editor: darkMode ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 border-blue-500/30' : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-blue-200',
+        Viewer: darkMode ? 'bg-gradient-to-r from-gray-500/20 to-gray-600/20 text-gray-300 border-gray-500/30' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200',
       },
     };
 
     return (
-      <span className={`px-2 py-1 text-xs rounded-full ${colors[type]?.[value] || (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800')}`}>
+      <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${colors[type]?.[value] || (darkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-100 text-gray-700 border-gray-200')}`}>
         {value}
       </span>
     );
   };
 
   // Theme classes
-  const bgMain = darkMode ? 'bg-gray-900' : 'bg-gray-100';
-  const bgSidebar = darkMode ? 'bg-gray-800' : 'bg-white';
-  const bgContent = darkMode ? 'bg-gray-800' : 'bg-white';
+  const bgMain = darkMode ? 'bg-gray-950' : 'bg-gradient-to-br from-gray-50 to-gray-100';
+  const bgSidebar = darkMode ? 'bg-gray-900/90 backdrop-blur-xl' : 'bg-white/90 backdrop-blur-xl';
+  const bgContent = darkMode ? 'bg-gray-900/50 backdrop-blur-sm' : 'bg-white/50 backdrop-blur-sm';
   const textPrimary = darkMode ? 'text-white' : 'text-gray-900';
   const textSecondary = darkMode ? 'text-gray-400' : 'text-gray-500';
-  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
-  const hoverBg = darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100';
+  const borderColor = darkMode ? 'border-gray-800' : 'border-gray-200/80';
+  const hoverBg = darkMode ? 'hover:bg-gray-800/50' : 'hover:bg-gray-100/80';
 
   return (
     <div className={`h-screen ${bgMain} ${textPrimary} flex overflow-hidden`}>
       {/* Sidebar - fissa */}
       <aside 
-        className={`${bgSidebar} ${borderColor} transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-64'} border-r flex flex-col h-screen sticky top-0`}
+        className={`${bgSidebar} ${borderColor} transition-all duration-500 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-72'} border-r flex flex-col h-screen sticky top-0 shadow-2xl`}
         style={{ height: '100vh' }}
       >
         {/* Logo area */}
-        <div className={`p-4 border-b ${borderColor} flex items-center justify-between shrink-0`}>
+        <div className={`p-5 border-b ${borderColor} flex items-center justify-between shrink-0`}>
           {!sidebarCollapsed && (
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">📝</span>
-              <span className="font-bold text-lg">LightModel</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">⚡</span>
+              </div>
+              <span className="font-bold text-xl bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                LightModel
+              </span>
             </div>
           )}
           {sidebarCollapsed && (
             <div className="w-full flex justify-center">
-              <span className="text-2xl">📝</span>
+              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg">⚡</span>
+              </div>
             </div>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`p-1 rounded ${hoverBg} shrink-0`}
+            className={`p-2 rounded-xl ${hoverBg} shrink-0 transition-all hover:scale-110`}
           >
-            <span className="text-xl">{sidebarCollapsed ? '→' : '←'}</span>
+            <span className="text-lg">{sidebarCollapsed ? '→' : '←'}</span>
           </button>
         </div>
 
         {/* Navigation - scrollabile se necessario */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
           {navItems.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center px-4 py-3 transition-colors ${
+              className={`w-full flex items-center px-3 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === item.id
                   ? darkMode 
-                    ? 'bg-blue-900 text-blue-300 border-l-4 border-blue-500'
-                    : 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                    ? `bg-linear-to-r ${item.gradient} text-white shadow-lg shadow-${item.gradient.split(' ')[1]}/20`
+                    : `bg-linear-to-r ${item.gradient} text-white shadow-lg shadow-${item.gradient.split(' ')[1]}/20`
                   : `${textSecondary} ${hoverBg}`
               }`}
             >
               <span className="text-xl mr-3">{item.icon}</span>
               {!sidebarCollapsed && (
                 <>
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {item.count !== undefined && (
-                    <span className={`${darkMode ? 'bg-gray-700' : 'bg-gray-200'} px-2 py-0.5 rounded-full text-xs`}>
+                  <span className="flex-1 text-left font-medium">{item.label}</span>
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className={`${darkMode ? 'bg-gray-800' : 'bg-white/30'} px-2 py-0.5 rounded-full text-xs font-medium`}>
                       {item.count}
                     </span>
                   )}
@@ -472,9 +484,9 @@ const CMSHeadless = () => {
         </nav>
 
         {/* User section - fissa in basso */}
-        <div className={`p-4 border-t ${borderColor} shrink-0`}>
+        <div className={`p-5 border-t ${borderColor} shrink-0`}>
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold shrink-0">
+            <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-lg shrink-0">
               A
             </div>
             {!sidebarCollapsed && (
@@ -485,7 +497,7 @@ const CMSHeadless = () => {
                 </div>
                 <button
                   onClick={() => setDarkMode(!darkMode)}
-                  className={`p-2 rounded ${hoverBg} shrink-0`}
+                  className={`p-2.5 rounded-xl ${hoverBg} shrink-0 transition-all hover:scale-110`}
                 >
                   <span className="text-lg">{darkMode ? '☀️' : '🌙'}</span>
                 </button>
@@ -498,12 +510,19 @@ const CMSHeadless = () => {
       {/* Main Content Area - scrollabile */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header fisso */}
-        <header className={`${bgSidebar} ${borderColor} border-b sticky top-0 z-30 shrink-0`}>
-          <div className="px-6 py-4">
+        <header className={`${bgSidebar} ${borderColor} border-b sticky top-0 z-30 shrink-0 backdrop-blur-xl`}>
+          <div className="px-8 py-5">
             <div className="flex justify-between items-center">
-              <h2 className={`text-xl font-semibold ${textPrimary}`}>
-                {navItems.find(item => item.id === activeTab)?.label}
-              </h2>
+              <div className="flex items-center space-x-3">
+                <h2 className={`text-2xl font-bold ${textPrimary}`}>
+                  {navItems.find(item => item.id === activeTab)?.label}
+                </h2>
+                <span className={`text-sm ${textSecondary} px-3 py-1 rounded-full ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  {activeTab === 'entities' && `${entities.length} entità`}
+                  {activeTab === 'media' && `${media.length} file`}
+                  {activeTab === 'users' && `${users.length} utenti`}
+                </span>
+              </div>
               {activeTab !== 'settings' && activeTab !== 'activity' && (
                 <button
                   onClick={() => {
@@ -512,9 +531,9 @@ const CMSHeadless = () => {
                       handleCreateRecord(entities[0]);
                     }
                   }}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 flex items-center space-x-2 shrink-0"
+                  className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2 shrink-0"
                 >
-                  <span>+</span>
+                  <span className="text-lg">+</span>
                   <span>Nuovo</span>
                 </button>
               )}
@@ -523,35 +542,35 @@ const CMSHeadless = () => {
         </header>
 
         {/* Content Area - scrollabile */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-8">
           {/* Entities Tab */}
           {activeTab === 'entities' && (
             <div>
-              <div className="grid gap-4">
+              <div className="grid gap-6">
                 {entities.map(entity => (
-                  <div key={entity.id} className={`${bgContent} border ${borderColor} rounded-lg p-4`}>
+                  <div key={entity.id} className={`${bgContent} border ${borderColor} rounded-2xl p-6 backdrop-blur-sm hover:shadow-xl transition-all duration-300`}>
                     <div className="flex justify-between items-center mb-4">
                       <div>
-                        <h3 className={`font-semibold text-lg ${textPrimary}`}>{entity.name}</h3>
-                        <p className={`text-sm ${textSecondary}`}>Slug: {entity.slug}</p>
+                        <h3 className={`font-bold text-xl ${textPrimary}`}>{entity.name}</h3>
+                        <p className={`text-sm ${textSecondary} mt-1`}>Slug: {entity.slug}</p>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm">
+                        <button className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium">
                           Modifica
                         </button>
-                        <button className="text-red-600 hover:text-red-800 text-sm">
+                        <button className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium">
                           Elimina
                         </button>
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <h4 className={`text-sm font-medium ${textSecondary} mb-2`}>Campi:</h4>
+                    <div className="mb-6">
+                      <h4 className={`text-sm font-medium ${textSecondary} mb-3`}>Campi:</h4>
                       <div className="flex flex-wrap gap-2">
                         {fields[entity.id]?.map(field => (
                           <span
                             key={field.id}
-                            className={`${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} px-2 py-1 rounded text-xs`}
+                            className={`${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-800'} px-3 py-1.5 rounded-xl text-xs font-medium border ${borderColor}`}
                           >
                             {field.name} ({field.type})
                             {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -560,14 +579,14 @@ const CMSHeadless = () => {
                       </div>
                     </div>
 
-                    <div className={`border-t ${borderColor} pt-4 mt-4`}>
-                      <div className="flex justify-between items-center mb-3">
+                    <div className={`border-t ${borderColor} pt-6 mt-4`}>
+                      <div className="flex justify-between items-center mb-4">
                         <h4 className={`text-sm font-medium ${textSecondary}`}>
                           Records ({records[entity.id]?.length || 0})
                         </h4>
                         <button
                           onClick={() => handleCreateRecord(entity)}
-                          className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                          className="text-blue-500 hover:text-blue-600 text-sm font-medium flex items-center space-x-1 hover:bg-blue-500/10 px-3 py-1.5 rounded-xl transition-all"
                         >
                           <span>+ Nuovo record</span>
                         </button>
@@ -577,26 +596,26 @@ const CMSHeadless = () => {
                         {records[entity.id]?.map(record => (
                           <div
                             key={record.id}
-                            className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-lg flex justify-between items-center`}
+                            className={`${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-4 rounded-xl flex justify-between items-center border ${borderColor} hover:shadow-md transition-all`}
                           >
                             <div>
                               <p className={`font-medium ${textPrimary}`}>
                                 {Object.values(record.dataJson)[0] || `Record #${record.id}`}
                               </p>
-                              <p className={`text-xs ${textSecondary}`}>
+                              <p className={`text-xs ${textSecondary} mt-1`}>
                                 Creato: {record.createdAt}
                               </p>
                             </div>
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditRecord(entity, record)}
-                                className="text-blue-600 hover:text-blue-800 text-xs"
+                                className="px-3 py-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Modifica
                               </button>
                               <button
                                 onClick={() => handleDeleteRecord(entity.id, record.id)}
-                                className="text-red-600 hover:text-red-800 text-xs"
+                                className="px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Elimina
                               </button>
@@ -615,54 +634,54 @@ const CMSHeadless = () => {
           {activeTab === 'content' && (
             <div className="space-y-6">
               {entities.map(entity => (
-                <div key={entity.id} className={`${bgContent} border ${borderColor} rounded-lg p-4`}>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className={`font-semibold text-lg ${textPrimary}`}>{entity.name}</h3>
+                <div key={entity.id} className={`${bgContent} border ${borderColor} rounded-2xl p-6 backdrop-blur-sm hover:shadow-xl transition-all duration-300`}>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className={`font-bold text-xl ${textPrimary}`}>{entity.name}</h3>
                     <button
                       onClick={() => handleCreateRecord(entity)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600"
+                      className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
                     >
                       + Nuovo
                     </button>
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y ${borderColor}">
-                      <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
-                        <tr>
-                          <th className={`px-4 py-2 text-left text-xs font-medium ${textSecondary} uppercase`}>ID</th>
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className={`border-b ${borderColor}`}>
+                          <th className={`px-4 py-3 text-left text-xs font-medium ${textSecondary} uppercase tracking-wider`}>ID</th>
                           {fields[entity.id]?.slice(0, 3).map(field => (
-                            <th key={field.id} className={`px-4 py-2 text-left text-xs font-medium ${textSecondary} uppercase`}>
+                            <th key={field.id} className={`px-4 py-3 text-left text-xs font-medium ${textSecondary} uppercase tracking-wider`}>
                               {field.name}
                             </th>
                           ))}
-                          <th className={`px-4 py-2 text-left text-xs font-medium ${textSecondary} uppercase`}>Stato</th>
-                          <th className={`px-4 py-2 text-right text-xs font-medium ${textSecondary} uppercase`}>Azioni</th>
+                          <th className={`px-4 py-3 text-left text-xs font-medium ${textSecondary} uppercase tracking-wider`}>Stato</th>
+                          <th className={`px-4 py-3 text-right text-xs font-medium ${textSecondary} uppercase tracking-wider`}>Azioni</th>
                         </tr>
                       </thead>
-                      <tbody className={`divide-y ${borderColor}`}>
+                      <tbody className="divide-y ${borderColor}">
                         {records[entity.id]?.map(record => (
-                          <tr key={record.id}>
-                            <td className={`px-4 py-2 text-sm ${textPrimary}`}>{record.id}</td>
+                          <tr key={record.id} className="hover:bg-gray-500/5 transition-colors">
+                            <td className={`px-4 py-3 text-sm ${textPrimary}`}>{record.id}</td>
                             {fields[entity.id]?.slice(0, 3).map(field => (
-                              <td key={field.id} className={`px-4 py-2 text-sm ${textPrimary}`}>
+                              <td key={field.id} className={`px-4 py-3 text-sm ${textPrimary}`}>
                                 {String(record.dataJson[field.slug] || '-').substring(0, 30)}
                                 {record.dataJson[field.slug]?.length > 30 && '...'}
                               </td>
                             ))}
-                            <td className="px-4 py-2">
+                            <td className="px-4 py-3">
                               <Badge type="status" value={record.status || 'draft'} />
                             </td>
-                            <td className="px-4 py-2 text-right space-x-2">
+                            <td className="px-4 py-3 text-right space-x-2">
                               <button
                                 onClick={() => handleEditRecord(entity, record)}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                className="px-3 py-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Modifica
                               </button>
                               <button
                                 onClick={() => handleDeleteRecord(entity.id, record.id)}
-                                className="text-red-600 hover:text-red-800 text-sm"
+                                className="px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Elimina
                               </button>
@@ -679,25 +698,25 @@ const CMSHeadless = () => {
 
           {/* Media Tab */}
           {activeTab === 'media' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {media.map(item => (
-                <div key={item.id} className={`${bgContent} border ${borderColor} rounded-lg p-4`}>
-                  <div className={`aspect-video ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg mb-3 flex items-center justify-center`}>
+                <div key={item.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 group`}>
+                  <div className={`aspect-video ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}>
                     {item.mimeType.startsWith('image/') ? (
-                      <span className="text-4xl">🖼️</span>
+                      <span className="text-5xl">🖼️</span>
                     ) : (
-                      <span className="text-4xl">📄</span>
+                      <span className="text-5xl">📄</span>
                     )}
                   </div>
-                  <p className={`font-medium truncate ${textPrimary}`}>{item.filename}</p>
-                  <p className={`text-xs ${textSecondary}`}>
-                    {(item.size / 1024 / 1024).toFixed(2)} MB • {item.mimeType}
+                  <p className={`font-medium truncate ${textPrimary} text-lg`}>{item.filename}</p>
+                  <p className={`text-xs ${textSecondary} mt-1`}>
+                    {(item.size / 1024 / 1024).toFixed(2)} MB • {item.mimeType.split('/')[1]}
                   </p>
-                  <div className="mt-2 flex justify-end space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm">
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium">
                       Dettagli
                     </button>
-                    <button className="text-red-600 hover:text-red-800 text-sm">
+                    <button className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium">
                       Elimina
                     </button>
                   </div>
@@ -708,20 +727,23 @@ const CMSHeadless = () => {
 
           {/* Users & Roles Tab */}
           {activeTab === 'users' && (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-8">
               {/* Users List */}
               <div>
-                <h3 className={`font-semibold mb-4 ${textPrimary}`}>Utenti</h3>
-                <div className="space-y-3">
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">👤</span>
+                  <span>Utenti</span>
+                </h3>
+                <div className="space-y-4">
                   {users.map(user => (
-                    <div key={user.id} className={`${bgContent} border ${borderColor} rounded-lg p-4`}>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    <div key={user.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl transition-all duration-300`}>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
                           {user.name.charAt(0)}
                         </div>
                         <div className="flex-1">
-                          <p className={`font-medium ${textPrimary}`}>{user.name}</p>
-                          <p className={`text-sm ${textSecondary}`}>{user.email}</p>
+                          <p className={`font-semibold ${textPrimary}`}>{user.name}</p>
+                          <p className={`text-sm ${textSecondary} mt-1`}>{user.email}</p>
                         </div>
                         <Badge type="role" value={roles.find(r => r.id === user.roleId)?.name || 'Unknown'} />
                       </div>
@@ -732,16 +754,19 @@ const CMSHeadless = () => {
 
               {/* Roles List */}
               <div>
-                <h3 className={`font-semibold mb-4 ${textPrimary}`}>Ruoli</h3>
-                <div className="space-y-3">
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">🔐</span>
+                  <span>Ruoli</span>
+                </h3>
+                <div className="space-y-4">
                   {roles.map(role => (
-                    <div key={role.id} className={`${bgContent} border ${borderColor} rounded-lg p-4`}>
+                    <div key={role.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl transition-all duration-300`}>
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className={`font-medium ${textPrimary}`}>{role.name}</p>
-                          <p className={`text-sm ${textSecondary}`}>{role.description}</p>
+                          <p className={`font-semibold ${textPrimary} text-lg`}>{role.name}</p>
+                          <p className={`text-sm ${textSecondary} mt-1`}>{role.description}</p>
                         </div>
-                        <div className={`text-sm ${textSecondary}`}>
+                        <div className={`text-sm ${textSecondary} bg-gray-500/10 px-3 py-1.5 rounded-xl font-medium`}>
                           {users.filter(u => u.roleId === role.id).length} utenti
                         </div>
                       </div>
@@ -754,62 +779,75 @@ const CMSHeadless = () => {
 
           {/* API & Webhooks Tab */}
           {activeTab === 'api' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* API Tokens */}
               <div>
-                <h3 className={`font-semibold mb-4 ${textPrimary}`}>API Tokens</h3>
-                {apiTokens.map(token => (
-                  <div key={token.id} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg mb-2`}>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className={`font-medium ${textPrimary}`}>{token.name}</p>
-                        <code className={`text-sm ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-white'} px-2 py-1 rounded border ${borderColor}`}>
-                          {token.tokenHash.substring(0, 20)}...
-                        </code>
-                      </div>
-                      <div className={`text-sm ${textSecondary}`}>
-                        Scade: {token.expiresAt}
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">🔑</span>
+                  <span>API Tokens</span>
+                </h3>
+                <div className="space-y-4">
+                  {apiTokens.map(token => (
+                    <div key={token.id} className={`${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-5 rounded-2xl border ${borderColor} backdrop-blur-sm hover:shadow-xl transition-all`}>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className={`font-semibold ${textPrimary} text-lg`}>{token.name}</p>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <code className={`text-sm ${darkMode ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-800'} px-3 py-1.5 rounded-xl border ${borderColor} font-mono`}>
+                              {token.tokenHash.substring(0, 20)}...
+                            </code>
+                            <span className="text-xs text-gray-500">Token hash</span>
+                          </div>
+                        </div>
+                        <div className={`text-sm ${textSecondary} bg-gray-500/10 px-3 py-1.5 rounded-xl font-medium`}>
+                          Scade: {token.expiresAt}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Webhooks */}
               <div>
-                <h3 className={`font-semibold mb-4 ${textPrimary}`}>Webhooks</h3>
-                {webhooks.map(webhook => (
-                  <div key={webhook.id} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg mb-2`}>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className={`font-medium ${textPrimary}`}>Event: {webhook.event}</p>
-                        <p className={`text-sm ${textSecondary}`}>{webhook.url}</p>
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">🪝</span>
+                  <span>Webhooks</span>
+                </h3>
+                <div className="space-y-4">
+                  {webhooks.map(webhook => (
+                    <div key={webhook.id} className={`${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-5 rounded-2xl border ${borderColor} backdrop-blur-sm hover:shadow-xl transition-all`}>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className={`font-semibold ${textPrimary} text-lg`}>Event: {webhook.event}</p>
+                          <p className={`text-sm ${textSecondary} mt-2 font-mono`}>{webhook.url}</p>
+                        </div>
+                        <span className={`${darkMode ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-50 text-green-700 border-green-200'} px-3 py-1.5 rounded-xl text-xs font-medium border`}>
+                          Active
+                        </span>
                       </div>
-                      <span className={`${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'} px-2 py-1 rounded text-xs`}>
-                        Active
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Activity Log Tab */}
           {activeTab === 'activity' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {activityLog.map(log => (
-                <div key={log.id} className={`border-l-4 border-blue-500 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4`}>
-                  <div className="flex justify-between">
+                <div key={log.id} className={`border-l-4 border-blue-500 ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-5 rounded-2xl backdrop-blur-sm hover:shadow-xl transition-all`}>
+                  <div className="flex justify-between items-start">
                     <div>
-                      <p className={`font-medium ${textPrimary}`}>
+                      <p className={`font-semibold ${textPrimary} text-lg`}>
                         {log.action} - {entities.find(e => e.id === log.entityId)?.name} #{log.recordId}
                       </p>
-                      <p className={`text-sm ${textSecondary}`}>
+                      <p className={`text-sm ${textSecondary} mt-2`}>
                         Utente: {users.find(u => u.id === log.userId)?.name}
                       </p>
                     </div>
-                    <p className={`text-xs ${textSecondary}`}>
+                    <p className={`text-xs ${textSecondary} bg-gray-500/10 px-3 py-1.5 rounded-xl`}>
                       {new Date(log.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -820,17 +858,20 @@ const CMSHeadless = () => {
 
           {/* Settings Tab */}
           {activeTab === 'settings' && (
-            <div className="space-y-6">
-              <div className={`border-b ${borderColor} pb-6`}>
-                <h3 className={`font-medium mb-4 ${textPrimary}`}>Impostazioni Generali</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-8 max-w-3xl">
+              <div className={`${bgContent} border ${borderColor} rounded-2xl p-8 backdrop-blur-sm`}>
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">⚙️</span>
+                  <span>Impostazioni Generali</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className={`block text-sm font-medium ${textSecondary} mb-2`}>
                       Nome Sito
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-3 py-2 border ${borderColor} ${darkMode ? 'bg-gray-700 text-white' : 'bg-white'} rounded-lg`}
+                      className={`w-full px-4 py-3 border ${borderColor} ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
                       defaultValue="Il mio CMS"
                     />
                   </div>
@@ -840,26 +881,29 @@ const CMSHeadless = () => {
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-3 py-2 border ${borderColor} ${darkMode ? 'bg-gray-700 text-white' : 'bg-white'} rounded-lg`}
+                      className={`w-full px-4 py-3 border ${borderColor} ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
                       defaultValue="https://api.example.com"
                     />
                   </div>
                 </div>
               </div>
 
-              <div>
-                <h3 className={`font-medium mb-4 ${textPrimary}`}>Preferenze</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-blue-500" defaultChecked />
+              <div className={`${bgContent} border ${borderColor} rounded-2xl p-8 backdrop-blur-sm`}>
+                <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
+                  <span className="text-2xl">🎨</span>
+                  <span>Preferenze</span>
+                </h3>
+                <div className="space-y-4">
+                  <label className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-500/5 transition-colors cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded-md text-blue-500 focus:ring-blue-500/30" defaultChecked />
                     <span className={`text-sm ${textSecondary}`}>Notifiche email per nuove attività</span>
                   </label>
-                  <label className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-blue-500" />
+                  <label className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-500/5 transition-colors cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded-md text-blue-500 focus:ring-blue-500/30" />
                     <span className={`text-sm ${textSecondary}`}>Backup automatici giornalieri</span>
                   </label>
-                  <label className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-blue-500" defaultChecked />
+                  <label className="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-500/5 transition-colors cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded-md text-blue-500 focus:ring-blue-500/30" defaultChecked />
                     <span className={`text-sm ${textSecondary}`}>Registrazione log dettagliati</span>
                   </label>
                 </div>
@@ -884,7 +928,7 @@ const CMSHeadless = () => {
           <div className="space-y-6">
             {/* Dati base entità */}
             <div className="space-y-4">
-              <h4 className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Informazioni Base</h4>
+              <h4 className={`font-medium text-lg ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Informazioni Base</h4>
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                   Nome Entità
@@ -893,7 +937,7 @@ const CMSHeadless = () => {
                   type="text"
                   value={newEntityData.name}
                   onChange={(e) => setNewEntityData({ ...newEntityData, name: e.target.value })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
                   placeholder="es. Articoli"
                   autoFocus
                 />
@@ -906,7 +950,7 @@ const CMSHeadless = () => {
                   type="text"
                   value={newEntityData.slug}
                   onChange={(e) => setNewEntityData({ ...newEntityData, slug: e.target.value })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
                   placeholder="es. articles"
                 />
               </div>
@@ -918,58 +962,58 @@ const CMSHeadless = () => {
                   type="text"
                   value={newEntityData.tableName}
                   onChange={(e) => setNewEntityData({ ...newEntityData, tableName: e.target.value })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
                   placeholder="es. articles"
                 />
               </div>
             </div>
 
             {/* Gestione campi */}
-            <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} pt-4`}>
+            <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} pt-6`}>
               <div className="flex justify-between items-center mb-4">
-                <h4 className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Campi dell'Entità</h4>
+                <h4 className={`font-medium text-lg ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Campi dell'Entità</h4>
                 <button
                   type="button"
                   onClick={handleAddField}
-                  className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600 flex items-center space-x-1"
+                  className="bg-linear-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-green-500/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2"
                 >
                   <span>+</span>
                   <span>Aggiungi Campo</span>
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {entityFields.map((field, index) => (
-                  <div key={field.id} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-lg`}>
-                    <div className="flex justify-between items-center mb-2">
+                  <div key={field.id} className={`${darkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'} p-4 rounded-xl border ${borderColor}`}>
+                    <div className="flex justify-between items-center mb-3">
                       <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Campo {index + 1}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveField(field.id)}
-                        className="text-red-500 hover:text-red-700 text-sm"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10 px-2 py-1 rounded-lg transition-all text-sm"
                       >
                         Rimuovi
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       <input
                         type="text"
                         placeholder="Nome campo"
                         value={field.name}
                         onChange={(e) => handleFieldChange(field.id, 'name', e.target.value)}
-                        className={`px-2 py-1 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300'} rounded focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        className={`px-3 py-2 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
                       />
                       <input
                         type="text"
                         placeholder="Slug"
                         value={field.slug}
                         onChange={(e) => handleFieldChange(field.id, 'slug', e.target.value)}
-                        className={`px-2 py-1 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300'} rounded focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        className={`px-3 py-2 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
                       />
                       <select
                         value={field.type}
                         onChange={(e) => handleFieldChange(field.id, 'type', e.target.value)}
-                        className={`px-2 py-1 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300'} rounded focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        className={`px-3 py-2 text-sm border ${darkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-200 bg-white text-gray-900'} rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500`}
                       >
                         <option value="text">Testo</option>
                         <option value="textarea">Area di testo</option>
@@ -981,22 +1025,22 @@ const CMSHeadless = () => {
                         <option value="email">Email</option>
                         <option value="url">URL</option>
                       </select>
-                      <div className="flex items-center space-x-3">
-                        <label className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-4">
+                        <label className="flex items-center space-x-2">
                           <input
                             type="checkbox"
                             checked={field.required}
                             onChange={(e) => handleFieldChange(field.id, 'required', e.target.checked)}
-                            className="rounded text-blue-500"
+                            className="w-4 h-4 rounded text-blue-500 focus:ring-blue-500/30"
                           />
                           <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Obbligatorio</span>
                         </label>
-                        <label className="flex items-center space-x-1">
+                        <label className="flex items-center space-x-2">
                           <input
                             type="checkbox"
                             checked={field.unique}
                             onChange={(e) => handleFieldChange(field.id, 'unique', e.target.checked)}
-                            className="rounded text-blue-500"
+                            className="w-4 h-4 rounded text-blue-500 focus:ring-blue-500/30"
                           />
                           <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Unico</span>
                         </label>
@@ -1005,25 +1049,25 @@ const CMSHeadless = () => {
                   </div>
                 ))}
                 {entityFields.length === 0 && (
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-4`}>
-                    Nessun campo aggiunto. Clicca "Aggiungi Campo" per iniziare.
-                  </p>
+                  <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'} bg-gray-500/5 rounded-xl border ${borderColor} border-dashed`}>
+                    <p className="text-sm">Nessun campo aggiunto. Clicca "Aggiungi Campo" per iniziare.</p>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className={`flex justify-end space-x-3 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`flex justify-end space-x-3 pt-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className={`px-4 py-2 border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} rounded-lg text-sm`}
+                className={`px-5 py-2.5 border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-xl text-sm font-medium transition-all`}
               >
                 Annulla
               </button>
               <button
                 type="button"
                 onClick={handleSaveEntity}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                className="px-5 py-2.5 bg-linear-to-r from-blue-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
               >
                 Crea Entità
               </button>
