@@ -1,4 +1,4 @@
-import CMSHeadless from "./components/CMSHeadless.jsx";
+import CMSHeadless from "./components/CMSHeadless";
 
 export default function App() {
 	return (

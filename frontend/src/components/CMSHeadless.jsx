@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+// frontend/src/components/CMSHeadless.jsx
+import { useState, useEffect, useRef } from 'react';
+import api from '../services/api';
 
 // Componente Modal separato per evitare re-render che causano perdita di focus
 const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
@@ -37,11 +39,12 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
         className={`${modalBg} rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100 border ${borderColor}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={`sticky top-0 ${modalBg} border-b ${borderColor} px-6 py-4 flex justify-between items-center backdrop-blur-sm bg-opacity-90`}>
+        <div className={`sticky top-0 ${modalBg} border-b ${borderColor} px-6 py-4 flex justify-between items-center backdrop-blur-sm bg-opacity-90 z-10`}>
           <h3 className={`text-lg font-semibold ${textColor}`}>{title}</h3>
           <button 
             onClick={onClose} 
             className={`${textMuted} hover:${darkMode ? 'text-gray-300' : 'text-gray-600'} text-xl p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+            aria-label="Chiudi"
           >
             ✕
           </button>
@@ -54,12 +57,46 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
   );
 };
 
+// Componente Badge per stati e ruoli
+const Badge = ({ type, value, darkMode }) => {
+  const colors = {
+    status: {
+      published: darkMode 
+        ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+        : 'bg-green-50 text-green-700 border-green-200',
+      draft: darkMode 
+        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' 
+        : 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      archived: darkMode 
+        ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' 
+        : 'bg-gray-50 text-gray-700 border-gray-200',
+    },
+    role: {
+      Admin: darkMode 
+        ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' 
+        : 'bg-purple-50 text-purple-700 border-purple-200',
+      Editor: darkMode 
+        ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' 
+        : 'bg-blue-50 text-blue-700 border-blue-200',
+      Viewer: darkMode 
+        ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' 
+        : 'bg-gray-50 text-gray-700 border-gray-200',
+    },
+  };
+
+  return (
+    <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${colors[type]?.[value] || (darkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-100 text-gray-700 border-gray-200')}`}>
+      {value}
+    </span>
+  );
+};
+
+// Componente principale
 const CMSHeadless = () => {
   // Stati principali
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [entities, setEntities] = useState([]);
-  const [currentEntity, setCurrentEntity] = useState(null);
   const [records, setRecords] = useState({});
   const [fields, setFields] = useState({});
   const [users, setUsers] = useState([]);
@@ -84,6 +121,10 @@ const CMSHeadless = () => {
     tableName: ''
   });
 
+  // Stati per loading e errori
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   // Toggle dark mode
   useEffect(() => {
     if (darkMode) {
@@ -93,17 +134,49 @@ const CMSHeadless = () => {
     }
   }, [darkMode]);
 
-  // Simulazione dati iniziali (in produzione verrebbero da API)
+  // Carica dati iniziali
   useEffect(() => {
-    const sampleEntities = [];
-    setEntities(sampleEntities);
+    fetchEntities();
+    fetchOtherData();
+  }, []);
 
-    const sampleFields = {};
-    setFields(sampleFields);
+  // Fetch entities dal backend
+  const fetchEntities = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.getEntities();
+      setEntities(response.data);
+      
+      // Carica records per ogni entità
+      const recordsData = {};
+      const fieldsData = {};
+      
+      for (const entity of response.data) {
+        fieldsData[entity.id] = entity.fields || [];
+        
+        try {
+          const recordsResponse = await api.getRecords(entity.slug);
+          recordsData[entity.id] = recordsResponse.data;
+        } catch (err) {
+          console.error(`Error fetching records for ${entity.slug}:`, err);
+          recordsData[entity.id] = [];
+        }
+      }
+      
+      setFields(fieldsData);
+      setRecords(recordsData);
+    } catch (err) {
+      setError('Errore nel caricamento delle entità');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const sampleRecords = {};
-    setRecords(sampleRecords);
-
+  // Fetch altri dati (mock per ora)
+  const fetchOtherData = async () => {
+    // Dati di esempio per altre sezioni
     setUsers([
       { id: 1, email: 'admin@example.com', name: 'Admin User', roleId: 1, createdAt: '2024-01-01' },
       { id: 2, email: 'editor@example.com', name: 'Editor User', roleId: 2, createdAt: '2024-01-01' },
@@ -132,7 +205,7 @@ const CMSHeadless = () => {
       { id: 1, userId: 1, action: 'CREATE', entityId: 1, recordId: 1, createdAt: '2024-01-15T10:30:00' },
       { id: 2, userId: 1, action: 'UPDATE', entityId: 1, recordId: 2, createdAt: '2024-01-16T14:20:00' },
     ]);
-  }, []);
+  };
 
   // Reset stati quando si chiude la modale
   const handleCloseModal = () => {
@@ -145,7 +218,7 @@ const CMSHeadless = () => {
     setNewEntityData({ name: '', slug: '', tableName: '' });
   };
 
-  // Funzioni CRUD
+  // Funzioni per entità
   const handleCreateEntity = () => {
     setModalType('entity');
     setEditingItem(null);
@@ -154,6 +227,36 @@ const CMSHeadless = () => {
     setShowModal(true);
   };
 
+  const handleEditEntity = (entity) => {
+    setModalType('entity');
+    setEditingItem(entity);
+    setNewEntityData({
+      name: entity.name,
+      slug: entity.slug,
+      tableName: entity.tableName || entity.slug
+    });
+    setEntityFields(fields[entity.id]?.map(f => ({ ...f, id: Date.now() + f.id })) || []);
+    setShowModal(true);
+  };
+
+  const handleDeleteEntity = async (entityId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questa entità? Tutti i record associati verranno eliminati.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.deleteEntity(entityId);
+      await fetchEntities();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Errore durante l\'eliminazione dell\'entità');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gestione campi entità
   const handleAddField = () => {
     setEntityFields([
       ...entityFields,
@@ -178,34 +281,43 @@ const CMSHeadless = () => {
     ));
   };
 
-  const handleSaveEntity = () => {
-    if (!newEntityData.name || !newEntityData.slug) return;
+  const handleSaveEntity = async () => {
+    if (!newEntityData.name || !newEntityData.slug) {
+      alert('Nome e slug sono obbligatori');
+      return;
+    }
 
-    const newEntity = {
-      id: entities.length + 1,
-      ...newEntityData,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
+    try {
+      setLoading(true);
+      
+      const entityData = {
+        ...newEntityData,
+        fields: entityFields.map(f => ({
+          name: f.name,
+          slug: f.slug || f.name.toLowerCase().replace(/\s+/g, '_'),
+          type: f.type,
+          required: f.required,
+          unique: f.unique
+        }))
+      };
 
-    setEntities([...entities, newEntity]);
+      if (editingItem) {
+        await api.updateEntity(editingItem.id, entityData);
+      } else {
+        await api.createEntity(entityData);
+      }
 
-    const newFields = {};
-    newFields[newEntity.id] = entityFields.map((f, index) => ({
-      id: Date.now() + index,
-      entityId: newEntity.id,
-      name: f.name,
-      slug: f.slug || f.name.toLowerCase().replace(/\s+/g, '_'),
-      type: f.type,
-      required: f.required,
-      uniqueField: f.unique,
-      position: index + 1
-    }));
-
-    setFields({ ...fields, ...newFields });
-    setRecords({ ...records, [newEntity.id]: [] });
-    handleCloseModal();
+      await fetchEntities();
+      handleCloseModal();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Errore nel salvataggio dell\'entità');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Funzioni per records
   const handleCreateRecord = (entity) => {
     setSelectedEntity(entity);
     setModalType('record');
@@ -227,44 +339,58 @@ const CMSHeadless = () => {
     setSelectedEntity(entity);
     setModalType('record');
     setEditingItem(record);
-    setFormData(record.dataJson);
+    // Rimuovi i metadati dal record per lasciare solo i dati del form
+    const { id, createdAt, updatedAt, status, ...recordData } = record;
+    setFormData(recordData);
     setShowModal(true);
   };
 
-  const handleSaveRecord = () => {
+  const handleSaveRecord = async () => {
     if (!selectedEntity) return;
 
-    if (editingItem) {
-      const updatedRecords = { ...records };
-      updatedRecords[selectedEntity.id] = updatedRecords[selectedEntity.id].map(r => 
-        r.id === editingItem.id 
-          ? { ...r, dataJson: formData, updatedAt: new Date().toISOString().split('T')[0] }
-          : r
-      );
-      setRecords(updatedRecords);
-    } else {
-      const newRecord = {
-        id: Math.max(...(records[selectedEntity.id]?.map(r => r.id) || [0])) + 1,
-        entityId: selectedEntity.id,
-        dataJson: formData,
-        createdAt: new Date().toISOString().split('T')[0],
-        status: 'draft',
-      };
+    try {
+      setLoading(true);
       
+      if (editingItem) {
+        await api.updateRecord(selectedEntity.slug, editingItem.id, formData);
+      } else {
+        await api.createRecord(selectedEntity.slug, formData);
+      }
+
+      // Ricarica i records per questa entità
+      const response = await api.getRecords(selectedEntity.slug);
       setRecords({
         ...records,
-        [selectedEntity.id]: [...(records[selectedEntity.id] || []), newRecord],
+        [selectedEntity.id]: response.data
       });
+
+      handleCloseModal();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Errore nel salvataggio del record');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    
-    handleCloseModal();
   };
 
-  const handleDeleteRecord = (entityId, recordId) => {
-    if (window.confirm('Sei sicuro di voler eliminare questo record?')) {
-      const updatedRecords = { ...records };
-      updatedRecords[entityId] = updatedRecords[entityId].filter(r => r.id !== recordId);
-      setRecords(updatedRecords);
+  const handleDeleteRecord = async (entity, recordId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questo record?')) return;
+
+    try {
+      setLoading(true);
+      await api.deleteRecord(entity.slug, recordId);
+      
+      // Aggiorna la lista
+      const response = await api.getRecords(entity.slug);
+      setRecords({
+        ...records,
+        [entity.id]: response.data
+      });
+    } catch (err) {
+      alert('Errore durante l\'eliminazione del record');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -284,11 +410,11 @@ const CMSHeadless = () => {
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
             required={field.required}
+            placeholder={field.name}
           />
         );
       
       case 'textarea':
-      case 'richtext':
         return (
           <textarea
             rows="4"
@@ -296,6 +422,19 @@ const CMSHeadless = () => {
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
             required={field.required}
+            placeholder={field.name}
+          />
+        );
+      
+      case 'richtext':
+        return (
+          <textarea
+            rows="6"
+            value={value}
+            onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
+            className={inputClass}
+            required={field.required}
+            placeholder={field.name}
           />
         );
       
@@ -307,6 +446,7 @@ const CMSHeadless = () => {
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
             required={field.required}
+            placeholder={field.name}
           />
         );
       
@@ -328,7 +468,11 @@ const CMSHeadless = () => {
           <div className={`border-2 border-dashed ${darkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'} rounded-xl p-6 text-center transition-all cursor-pointer group`}>
             <div className="flex flex-col items-center space-y-2">
               <span className="text-4xl group-hover:scale-110 transition-transform">📁</span>
-              <button type="button" className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} px-4 py-2 rounded-lg text-sm font-medium transition-all`}>
+              <button 
+                type="button" 
+                className={`${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} px-4 py-2 rounded-lg text-sm font-medium transition-all`}
+                onClick={() => alert('Funzionalità media in sviluppo')}
+              >
                 Seleziona Media
               </button>
               {value && <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>File selezionato: {value}</p>}
@@ -343,6 +487,7 @@ const CMSHeadless = () => {
             value={value}
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
+            required={field.required}
           />
         );
 
@@ -353,6 +498,8 @@ const CMSHeadless = () => {
             value={value}
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
+            required={field.required}
+            placeholder="es. nome@esempio.com"
           />
         );
 
@@ -363,6 +510,8 @@ const CMSHeadless = () => {
             value={value}
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
+            required={field.required}
+            placeholder="https://esempio.com"
           />
         );
       
@@ -373,6 +522,8 @@ const CMSHeadless = () => {
             value={value}
             onChange={(e) => setFormData({ ...formData, [field.slug]: e.target.value })}
             className={inputClass}
+            required={field.required}
+            placeholder={field.name}
           />
         );
     }
@@ -389,28 +540,6 @@ const CMSHeadless = () => {
     { id: 'settings', label: 'Impostazioni', icon: '⚙️', gradient: 'from-gray-500 to-gray-600' },
   ];
 
-  // Badge component with dark mode support
-  const Badge = ({ type, value }) => {
-    const colors = {
-      status: {
-        published: darkMode ? 'bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-300 border-green-500/30' : 'bg-gradient-to-r from-green-50 to-green-100 text-green-700 border-green-200',
-        draft: darkMode ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 text-yellow-300 border-yellow-500/30' : 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-700 border-yellow-200',
-        archived: darkMode ? 'bg-gradient-to-r from-gray-500/20 to-gray-600/20 text-gray-300 border-gray-500/30' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200',
-      },
-      role: {
-        Admin: darkMode ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-300 border-purple-500/30' : 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 border-purple-200',
-        Editor: darkMode ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 border-blue-500/30' : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-blue-200',
-        Viewer: darkMode ? 'bg-gradient-to-r from-gray-500/20 to-gray-600/20 text-gray-300 border-gray-500/30' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200',
-      },
-    };
-
-    return (
-      <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${colors[type]?.[value] || (darkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-100 text-gray-700 border-gray-200')}`}>
-        {value}
-      </span>
-    );
-  };
-
   // Theme classes
   const bgMain = darkMode ? 'bg-gray-950' : 'bg-gradient-to-br from-gray-50 to-gray-100';
   const bgSidebar = darkMode ? 'bg-gray-900/90 backdrop-blur-xl' : 'bg-white/90 backdrop-blur-xl';
@@ -422,7 +551,7 @@ const CMSHeadless = () => {
 
   return (
     <div className={`h-screen ${bgMain} ${textPrimary} flex overflow-hidden`}>
-      {/* Sidebar - fissa */}
+      {/* Sidebar */}
       <aside 
         className={`${bgSidebar} ${borderColor} transition-all duration-500 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-72'} border-r flex flex-col h-screen sticky top-0 shadow-2xl`}
         style={{ height: '100vh' }}
@@ -434,7 +563,7 @@ const CMSHeadless = () => {
               <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="text-white text-lg">⚡</span>
               </div>
-              <span className="font-bold text-xl bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              <span className="font-bold text-xl bg-linear-to-rr from-blue-400 to-purple-500 bg-clip-text">
                 LightModel
               </span>
             </div>
@@ -449,12 +578,13 @@ const CMSHeadless = () => {
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`p-2 rounded-xl ${hoverBg} shrink-0 transition-all hover:scale-110`}
+            aria-label={sidebarCollapsed ? 'Espandi sidebar' : 'Comprimi sidebar'}
           >
             <span className="text-lg">{sidebarCollapsed ? '→' : '←'}</span>
           </button>
         </div>
 
-        {/* Navigation - scrollabile se necessario */}
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
           {navItems.map(item => (
             <button
@@ -462,9 +592,7 @@ const CMSHeadless = () => {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center px-3 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === item.id
-                  ? darkMode 
-                    ? `bg-linear-to-r ${item.gradient} text-white shadow-lg shadow-${item.gradient.split(' ')[1]}/20`
-                    : `bg-linear-to-r ${item.gradient} text-white shadow-lg shadow-${item.gradient.split(' ')[1]}/20`
+                  ? `bg-linear-to-r ${item.gradient} text-white shadow-lg`
                   : `${textSecondary} ${hoverBg}`
               }`}
             >
@@ -483,7 +611,7 @@ const CMSHeadless = () => {
           ))}
         </nav>
 
-        {/* User section - fissa in basso */}
+        {/* User section */}
         <div className={`p-5 border-t ${borderColor} shrink-0`}>
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold shadow-lg shrink-0">
@@ -498,6 +626,7 @@ const CMSHeadless = () => {
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className={`p-2.5 rounded-xl ${hoverBg} shrink-0 transition-all hover:scale-110`}
+                  aria-label={darkMode ? 'Passa alla modalità chiara' : 'Passa alla modalità scura'}
                 >
                   <span className="text-lg">{darkMode ? '☀️' : '🌙'}</span>
                 </button>
@@ -507,9 +636,9 @@ const CMSHeadless = () => {
         </div>
       </aside>
 
-      {/* Main Content Area - scrollabile */}
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header fisso */}
+        {/* Header */}
         <header className={`${bgSidebar} ${borderColor} border-b sticky top-0 z-30 shrink-0 backdrop-blur-xl`}>
           <div className="px-8 py-5">
             <div className="flex justify-between items-center">
@@ -519,6 +648,7 @@ const CMSHeadless = () => {
                 </h2>
                 <span className={`text-sm ${textSecondary} px-3 py-1 rounded-full ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
                   {activeTab === 'entities' && `${entities.length} entità`}
+                  {activeTab === 'content' && `${Object.values(records).flat().length} record`}
                   {activeTab === 'media' && `${media.length} file`}
                   {activeTab === 'users' && `${users.length} utenti`}
                 </span>
@@ -541,10 +671,24 @@ const CMSHeadless = () => {
           </div>
         </header>
 
-        {/* Content Area - scrollabile */}
+        {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8">
+          {/* Loading indicator */}
+          {loading && (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          )}
+
+          {/* Error message */}
+          {error && !loading && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-6">
+              {error}
+            </div>
+          )}
+
           {/* Entities Tab */}
-          {activeTab === 'entities' && (
+          {activeTab === 'entities' && !loading && (
             <div>
               <div className="grid gap-6">
                 {entities.map(entity => (
@@ -552,18 +696,27 @@ const CMSHeadless = () => {
                     <div className="flex justify-between items-center mb-4">
                       <div>
                         <h3 className={`font-bold text-xl ${textPrimary}`}>{entity.name}</h3>
-                        <p className={`text-sm ${textSecondary} mt-1`}>Slug: {entity.slug}</p>
+                        <p className={`text-sm ${textSecondary} mt-1`}>
+                          Slug: {entity.slug} • Records: {entity.stats?.recordsCount || 0}
+                        </p>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium">
+                        <button 
+                          onClick={() => handleEditEntity(entity)}
+                          className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium"
+                        >
                           Modifica
                         </button>
-                        <button className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium">
+                        <button 
+                          onClick={() => handleDeleteEntity(entity.id)}
+                          className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium"
+                        >
                           Elimina
                         </button>
                       </div>
                     </div>
 
+                    {/* Fields */}
                     <div className="mb-6">
                       <h4 className={`text-sm font-medium ${textSecondary} mb-3`}>Campi:</h4>
                       <div className="flex flex-wrap gap-2">
@@ -573,12 +726,12 @@ const CMSHeadless = () => {
                             className={`${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-800'} px-3 py-1.5 rounded-xl text-xs font-medium border ${borderColor}`}
                           >
                             {field.name} ({field.type})
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
                           </span>
                         ))}
                       </div>
                     </div>
 
+                    {/* Records */}
                     <div className={`border-t ${borderColor} pt-6 mt-4`}>
                       <div className="flex justify-between items-center mb-4">
                         <h4 className={`text-sm font-medium ${textSecondary}`}>
@@ -598,15 +751,15 @@ const CMSHeadless = () => {
                             key={record.id}
                             className={`${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-4 rounded-xl flex justify-between items-center border ${borderColor} hover:shadow-md transition-all`}
                           >
-                            <div>
-                              <p className={`font-medium ${textPrimary}`}>
-                                {Object.values(record.dataJson)[0] || `Record #${record.id}`}
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-medium ${textPrimary} truncate`}>
+                                {Object.values(record)[0] || `Record #${record.id}`}
                               </p>
                               <p className={`text-xs ${textSecondary} mt-1`}>
-                                Creato: {record.createdAt}
+                                Creato: {new Date(record.createdAt).toLocaleDateString()}
                               </p>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-2 ml-4">
                               <button
                                 onClick={() => handleEditRecord(entity, record)}
                                 className="px-3 py-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-lg transition-all text-xs font-medium"
@@ -614,7 +767,7 @@ const CMSHeadless = () => {
                                 Modifica
                               </button>
                               <button
-                                onClick={() => handleDeleteRecord(entity.id, record.id)}
+                                onClick={() => handleDeleteRecord(entity, record.id)}
                                 className="px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Elimina
@@ -626,12 +779,24 @@ const CMSHeadless = () => {
                     </div>
                   </div>
                 ))}
+
+                {entities.length === 0 && (
+                  <div className={`text-center py-12 ${bgContent} border ${borderColor} rounded-2xl`}>
+                    <p className={`text-lg ${textSecondary} mb-4`}>Nessuna entità trovata</p>
+                    <button
+                      onClick={handleCreateEntity}
+                      className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
+                    >
+                      Crea la tua prima entità
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Content Tab */}
-          {activeTab === 'content' && (
+          {activeTab === 'content' && !loading && (
             <div className="space-y-6">
               {entities.map(entity => (
                 <div key={entity.id} className={`${bgContent} border ${borderColor} rounded-2xl p-6 backdrop-blur-sm hover:shadow-xl transition-all duration-300`}>
@@ -641,7 +806,7 @@ const CMSHeadless = () => {
                       onClick={() => handleCreateRecord(entity)}
                       className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
                     >
-                      + Nuovo
+                      + Nuovo record
                     </button>
                   </div>
 
@@ -659,18 +824,18 @@ const CMSHeadless = () => {
                           <th className={`px-4 py-3 text-right text-xs font-medium ${textSecondary} uppercase tracking-wider`}>Azioni</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y ${borderColor}">
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                         {records[entity.id]?.map(record => (
                           <tr key={record.id} className="hover:bg-gray-500/5 transition-colors">
                             <td className={`px-4 py-3 text-sm ${textPrimary}`}>{record.id}</td>
                             {fields[entity.id]?.slice(0, 3).map(field => (
                               <td key={field.id} className={`px-4 py-3 text-sm ${textPrimary}`}>
-                                {String(record.dataJson[field.slug] || '-').substring(0, 30)}
-                                {record.dataJson[field.slug]?.length > 30 && '...'}
+                                {String(record[field.slug] || '-').substring(0, 30)}
+                                {record[field.slug]?.length > 30 && '...'}
                               </td>
                             ))}
                             <td className="px-4 py-3">
-                              <Badge type="status" value={record.status || 'draft'} />
+                              <Badge type="status" value={record.status || 'draft'} darkMode={darkMode} />
                             </td>
                             <td className="px-4 py-3 text-right space-x-2">
                               <button
@@ -680,7 +845,7 @@ const CMSHeadless = () => {
                                 Modifica
                               </button>
                               <button
-                                onClick={() => handleDeleteRecord(entity.id, record.id)}
+                                onClick={() => handleDeleteRecord(entity, record.id)}
                                 className="px-3 py-1.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-all text-xs font-medium"
                               >
                                 Elimina
@@ -697,7 +862,7 @@ const CMSHeadless = () => {
           )}
 
           {/* Media Tab */}
-          {activeTab === 'media' && (
+          {activeTab === 'media' && !loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {media.map(item => (
                 <div key={item.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 group`}>
@@ -726,7 +891,7 @@ const CMSHeadless = () => {
           )}
 
           {/* Users & Roles Tab */}
-          {activeTab === 'users' && (
+          {activeTab === 'users' && !loading && (
             <div className="grid md:grid-cols-2 gap-8">
               {/* Users List */}
               <div>
@@ -745,7 +910,7 @@ const CMSHeadless = () => {
                           <p className={`font-semibold ${textPrimary}`}>{user.name}</p>
                           <p className={`text-sm ${textSecondary} mt-1`}>{user.email}</p>
                         </div>
-                        <Badge type="role" value={roles.find(r => r.id === user.roleId)?.name || 'Unknown'} />
+                        <Badge type="role" value={roles.find(r => r.id === user.roleId)?.name || 'Unknown'} darkMode={darkMode} />
                       </div>
                     </div>
                   ))}
@@ -778,7 +943,7 @@ const CMSHeadless = () => {
           )}
 
           {/* API & Webhooks Tab */}
-          {activeTab === 'api' && (
+          {activeTab === 'api' && !loading && (
             <div className="space-y-8">
               {/* API Tokens */}
               <div>
@@ -834,7 +999,7 @@ const CMSHeadless = () => {
           )}
 
           {/* Activity Log Tab */}
-          {activeTab === 'activity' && (
+          {activeTab === 'activity' && !loading && (
             <div className="space-y-4">
               {activityLog.map(log => (
                 <div key={log.id} className={`border-l-4 border-blue-500 ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} p-5 rounded-2xl backdrop-blur-sm hover:shadow-xl transition-all`}>
@@ -844,7 +1009,7 @@ const CMSHeadless = () => {
                         {log.action} - {entities.find(e => e.id === log.entityId)?.name} #{log.recordId}
                       </p>
                       <p className={`text-sm ${textSecondary} mt-2`}>
-                        Utente: {users.find(u => u.id === log.userId)?.name}
+                        Utente: {users.find(u => u.id === log.userId)?.name || 'Unknown'}
                       </p>
                     </div>
                     <p className={`text-xs ${textSecondary} bg-gray-500/10 px-3 py-1.5 rounded-xl`}>
@@ -857,7 +1022,7 @@ const CMSHeadless = () => {
           )}
 
           {/* Settings Tab */}
-          {activeTab === 'settings' && (
+          {activeTab === 'settings' && !loading && (
             <div className="space-y-8 max-w-3xl">
               <div className={`${bgContent} border ${borderColor} rounded-2xl p-8 backdrop-blur-sm`}>
                 <h3 className={`font-bold text-xl mb-6 ${textPrimary} flex items-center space-x-2`}>
@@ -924,6 +1089,12 @@ const CMSHeadless = () => {
         }
         darkMode={darkMode}
       >
+        {loading && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-xl">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        )}
+
         {modalType === 'entity' ? (
           <div className="space-y-6">
             {/* Dati base entità */}
@@ -956,14 +1127,14 @@ const CMSHeadless = () => {
               </div>
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
-                  Nome Tabella
+                  Nome Tabella (opzionale)
                 </label>
                 <input
                   type="text"
                   value={newEntityData.tableName}
                   onChange={(e) => setNewEntityData({ ...newEntityData, tableName: e.target.value })}
                   className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
-                  placeholder="es. articles"
+                  placeholder="es. articles (lasciare vuoto per usare lo slug)"
                 />
               </div>
             </div>
@@ -1069,7 +1240,7 @@ const CMSHeadless = () => {
                 onClick={handleSaveEntity}
                 className="px-5 py-2.5 bg-linear-to-r from-blue-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
               >
-                Crea Entità
+                {editingItem ? 'Aggiorna Entità' : 'Crea Entità'}
               </button>
             </div>
           </div>
@@ -1079,7 +1250,6 @@ const CMSHeadless = () => {
               <div key={field.id}>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                   {field.name}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
                 {renderFormField(field)}
                 {field.type === 'relation' && (
@@ -1101,7 +1271,7 @@ const CMSHeadless = () => {
               <button
                 type="button"
                 onClick={handleSaveRecord}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                className="px-4 py-2 bg-linear-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
               >
                 {editingItem ? 'Aggiorna' : 'Crea'}
               </button>
