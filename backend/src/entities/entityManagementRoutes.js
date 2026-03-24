@@ -73,14 +73,6 @@ export function registerEntityManagementRoutes(app) {
 
             await registerEntityRoutesFor(newEntity, app);
 
-            // Log attività - DOPO la creazione
-            await db("ActivityLog").insert({
-                userId: req.user?.id || 1,
-                action: 'CREATE_ENTITY',
-                entityId: entityId,
-                createdAt: db.fn.now()
-            });
-
             res.json({
                 ...newEntity,
                 fields: entityFields
@@ -120,14 +112,6 @@ export function registerEntityManagementRoutes(app) {
                 await db("Field").insert(fieldsToInsert);
             }
 
-            // Log attività - DOPO l'update
-            await db("ActivityLog").insert({
-                userId: req.user?.id || 1,
-                action: 'UPDATE_ENTITY',
-                entityId: id,
-                createdAt: db.fn.now()
-            });
-
             res.json({ success: true });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -138,15 +122,6 @@ export function registerEntityManagementRoutes(app) {
     app.delete("/api/entities/:id", async (req, res) => {
         try {
             const { id } = req.params;
-            const userId = req.user?.id || 1;
-
-            // 1. PRIMA inserisci il log (l'entità esiste ancora)
-            await db("ActivityLog").insert({
-                userId: userId,
-                action: 'DELETE_ENTITY',
-                entityId: id,
-                createdAt: db.fn.now()
-            });
 
             // 2. POI elimina tutti i record associati e le loro dipendenze
             const records = await db("Record").where({ entityId: id });
@@ -168,7 +143,7 @@ export function registerEntityManagementRoutes(app) {
             await db("Permission").where({ entityId: id }).delete();
             
             // 6. INFINE elimina l'entità
-            await db("Entity").where({ id }).delete();
+            await db("Entity").where({ id: id }).delete();
 
             res.json({ success: true });
         } catch (error) {

@@ -104,7 +104,6 @@ const CMSHeadless = () => {
   const [media, setMedia] = useState([]);
   const [apiTokens, setApiTokens] = useState([]);
   const [webhooks, setWebhooks] = useState([]);
-  const [activityLog, setActivityLog] = useState([]);
   
   const [activeTab, setActiveTab] = useState('entities');
   const [showModal, setShowModal] = useState(false);
@@ -536,7 +535,6 @@ const CMSHeadless = () => {
     { id: 'media', label: 'Media', icon: '🖼️', count: media.length, gradient: 'from-purple-500 to-purple-600' },
     { id: 'users', label: 'Utenti & Ruoli', icon: '👥', gradient: 'from-yellow-500 to-yellow-600' },
     { id: 'api', label: 'API & Webhooks', icon: '🔌', gradient: 'from-red-500 to-red-600' },
-    { id: 'activity', label: 'Attività', icon: '📋', gradient: 'from-indigo-500 to-indigo-600' },
     { id: 'settings', label: 'Impostazioni', icon: '⚙️', gradient: 'from-gray-500 to-gray-600' },
   ];
 

@@ -124,9 +124,6 @@ const apiService = {
   // Webhooks (da implementare)
   getWebhooks: () => api.get('/api/webhooks'),
   
-  // Activity log (da implementare)
-  getActivityLog: () => api.get('/api/activity-log'),
-  
   // Health check
   healthCheck: () => api.get('/api/health')
 };

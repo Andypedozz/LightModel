@@ -133,17 +133,8 @@ export async function registerEntityRoutesFor(entity, app) {
             console.log(`Attempting to delete record ${recordId} from entity ${entityId}`);
 
             // Verifica dipendenze
-            const activityLogs = await db("ActivityLog").where({ recordId, entityId });
             const versions = await db("RecordVersion").where({ recordId, entityId });
             const tags = await db("RecordTag").where({ recordId });
-
-            console.log(`Found ${activityLogs.length} activity logs, ${versions.length} versions, ${tags.length} tags`);
-
-            // 1. Elimina i log
-            if (activityLogs.length > 0) {
-                await db("ActivityLog").where({ recordId, entityId }).delete();
-                console.log('Deleted activity logs');
-            }
 
             // 2. Elimina le versioni
             if (versions.length > 0) {

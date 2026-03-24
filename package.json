@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"cd backend && pnpm dev\" \"cd frontend && pnpm dev\"",
-    "build": ""
+    "create_db": "cd backend && node src/db/createDb.js",
+    "build": "cd frontend && pnpm build",
+    "prod": "cd backend && nodemon src/server.js"
   },
   "keywords": [],
   "author": "",

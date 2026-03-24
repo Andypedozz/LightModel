@@ -6,6 +6,7 @@ import { registerEntityManagementRoutes } from "./entities/entityManagementRoute
 import { ensureEntityTables } from "./db/db.js"
 
 const PORT = 3000;
+const __dirname = process.cwd();
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.get("/api/health", (req, res) => {
     res.json({ 
         status: "ok", 
         timestamp: new Date().toISOString(),
-        tables: ["Entity", "Field", "Record", "User", "Role", "Media", "ApiToken", "WebHook", "ActivityLog"]
+        tables: ["Entity", "Field", "Record", "User", "Role", "Media", "ApiToken", "WebHook"]
     });
 });
 

@@ -44,15 +44,6 @@ class RecordService {
             updatedAt: db.fn.now()
         });
 
-        // Log attività - DOPO la creazione
-        await db("ActivityLog").insert({
-            userId,
-            action: 'CREATE',
-            entityId,
-            recordId: id,
-            createdAt: db.fn.now()
-        });
-
         return id;
     }
 
@@ -85,29 +76,12 @@ class RecordService {
                 updatedById: userId
             });
 
-        // Log attività - DOPO l'update
-        await db("ActivityLog").insert({
-            userId,
-            action: 'UPDATE',
-            entityId,
-            recordId,
-            createdAt: db.fn.now()
-        });
     }
 
     static async delete(entityId, recordId, userId = 1) {
         const entity = await db("Entity").where({ id: entityId }).first();
         if (!entity) throw new Error("Entity not found");
         
-        // 1. PRIMA inserisci il log
-        await db("ActivityLog").insert({
-            userId,
-            action: 'DELETE',
-            entityId,
-            recordId,
-            createdAt: db.fn.now()
-        });
-
         // 2. POI elimina le dipendenze
         await db("RecordVersion").where({ 
             recordId,

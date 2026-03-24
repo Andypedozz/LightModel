@@ -38,6 +38,7 @@ async function createDb() {
         table.string("slug").unique();
         table.string("tableName");
         table.dateTime("createdAt").notNullable().defaultTo(db.fn.now());
+        table.dateTime("updatedAt").notNullable().defaultTo(db.fn.now());
     })
     
     // Field
@@ -131,16 +132,6 @@ async function createDb() {
         table.string("url");
         table.string("secret");
     })
-    
-    // ActivityLog
-    await db.schema.createTable("ActivityLog", table => {
-        table.integer("id").primary();
-        table.integer("userId").references("id").inTable("User");
-        table.string("action");
-        table.integer("entityId").references("id").inTable("Entity");
-        table.integer("recordId").references("id").inTable("Record");
-        table.dateTime("createdAt").notNullable().defaultTo(db.fn.now());
-    })
 }
 
 async function seedDb() {
@@ -167,74 +158,6 @@ async function seedDb() {
             name: "Editor",
             roleId: 2
         }
-    ])
-
-    // Entities
-    await db("Entity").insert([
-        {
-            id: 1,
-            name: "Post",
-            slug: "posts",
-            tableName: "posts"
-        },
-        {
-            id: 2,
-            name: "Category",
-            slug: "categories",
-            tableName: "categories"
-        }
-    ])
-
-    // Fields for Post
-    await db("Field").insert([
-        { id: 1, entityId: 1, name: "Title", slug: "title", type: "string", required: true, position: 1 },
-        { id: 2, entityId: 1, name: "Content", slug: "content", type: "text", required: true, position: 2 },
-        { id: 3, entityId: 1, name: "Published", slug: "published", type: "boolean", required: false, position: 3 }
-    ])
-
-    // Fields for Category
-    await db("Field").insert([
-        { id: 4, entityId: 2, name: "Name", slug: "name", type: "string", required: true, position: 1 }
-    ])
-
-    // Tags
-    await db("Tag").insert([
-        { id: 1, name: "Tech", slug: "tech" },
-        { id: 2, name: "News", slug: "news" }
-    ])
-
-    // Records
-    await db("Record").insert([
-        {
-            id: 1,
-            entityId: 1,
-            dataJson: JSON.stringify({
-                title: "Hello World",
-                content: "First post in the CMS",
-                published: true
-            }),
-            createdById: 1,
-            updatedById: 1,
-            status: "published"
-        },
-        {
-            id: 2,
-            entityId: 1,
-            dataJson: JSON.stringify({
-                title: "Second Post",
-                content: "Another example article",
-                published: false
-            }),
-            createdById: 2,
-            updatedById: 2,
-            status: "draft"
-        }
-    ])
-
-    // Record tags
-    await db("RecordTag").insert([
-        { recordId: 1, tagId: 1 },
-        { recordId: 1, tagId: 2 }
     ])
 
     console.log("Seed data inserted")
