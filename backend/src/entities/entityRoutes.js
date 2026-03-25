@@ -79,15 +79,6 @@ export async function registerEntityRoutesFor(entity, app) {
                 updatedAt: db.fn.now()
             });
 
-            // Log attività
-            await db("ActivityLog").insert({
-                userId: req.user?.id || 1,
-                action: 'CREATE',
-                entityId: entity.id,
-                recordId: id,
-                createdAt: db.fn.now()
-            });
-
             res.json({ id, success: true });
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -108,15 +99,6 @@ export async function registerEntityRoutesFor(entity, app) {
                     updatedById: req.user?.id || 1,
                     status: req.body.status || 'draft'
                 });
-
-            // Log attività
-            await db("ActivityLog").insert({
-                userId: req.user?.id || 1,
-                action: 'UPDATE',
-                entityId: entity.id,
-                recordId: req.params.id,
-                createdAt: db.fn.now()
-            });
 
             res.json({ success: true });
         } catch (error) {

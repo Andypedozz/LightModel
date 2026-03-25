@@ -104,6 +104,7 @@ const CMSHeadless = () => {
   const [media, setMedia] = useState([]);
   const [apiTokens, setApiTokens] = useState([]);
   const [webhooks, setWebhooks] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
   
   const [activeTab, setActiveTab] = useState('entities');
   const [showModal, setShowModal] = useState(false);
@@ -119,6 +120,11 @@ const CMSHeadless = () => {
     slug: '',
     tableName: ''
   });
+
+  // Stati per l'upload dei media
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Stati per loading e errori
   const [loading, setLoading] = useState(false);
@@ -188,8 +194,9 @@ const CMSHeadless = () => {
     ]);
 
     setMedia([
-      { id: 1, filename: 'hero.jpg', mimeType: 'image/jpeg', size: 2048576, altText: 'Hero image', createdAt: '2024-01-15' },
-      { id: 2, filename: 'document.pdf', mimeType: 'application/pdf', size: 1048576, createdAt: '2024-01-16' },
+      { id: 1, filename: 'hero.jpg', mimeType: 'image/jpeg', size: 2048576, altText: 'Hero image', description: 'Immagine hero del sito', createdAt: '2024-01-15' },
+      { id: 2, filename: 'document.pdf', mimeType: 'application/pdf', size: 1048576, altText: 'Documento PDF', description: 'Documento importante', createdAt: '2024-01-16' },
+      { id: 3, filename: 'background.png', mimeType: 'image/png', size: 512000, altText: 'Sfondo', description: 'Immagine di sfondo', createdAt: '2024-01-17' },
     ]);
 
     setApiTokens([
@@ -215,6 +222,9 @@ const CMSHeadless = () => {
     setSelectedEntity(null);
     setEntityFields([]);
     setNewEntityData({ name: '', slug: '', tableName: '' });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setIsDragging(false);
   };
 
   // Funzioni per entità
@@ -390,6 +400,127 @@ const CMSHeadless = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Funzioni per media
+  const handleCreateMedia = () => {
+    setModalType('media');
+    setEditingItem(null);
+    setFormData({
+      name: '',
+      altText: '',
+      description: ''
+    });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setShowModal(true);
+  };
+
+  const handleSaveMedia = async () => {
+    if (!selectedFile) {
+      alert('Seleziona un file da caricare');
+      return;
+    }
+
+    if (!formData.name) {
+      alert('Inserisci un nome per il file');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setUploadProgress(0);
+
+      // Simulazione upload con progresso
+      // In un caso reale, qui faremmo una chiamata API con FormData
+      const simulateUpload = () => {
+        return new Promise((resolve) => {
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 10;
+            setUploadProgress(progress);
+            if (progress >= 100) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 200);
+        });
+      };
+
+      await simulateUpload();
+
+      // Crea nuovo media
+      const newMedia = {
+        id: Date.now(),
+        filename: selectedFile.name,
+        mimeType: selectedFile.type,
+        size: selectedFile.size,
+        altText: formData.altText || '',
+        description: formData.description || '',
+        name: formData.name,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+
+      setMedia([...media, newMedia]);
+      handleCloseModal();
+      
+      // Mostra successo
+      alert('Media caricato con successo!');
+    } catch (err) {
+      alert('Errore durante il caricamento del media');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDeleteMedia = async (mediaId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questo media?')) return;
+
+    try {
+      setLoading(true);
+      // Simula eliminazione
+      setMedia(media.filter(item => item.id !== mediaId));
+      alert('Media eliminato con successo!');
+    } catch (err) {
+      alert('Errore durante l\'eliminazione del media');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileSelect = (file) => {
+    if (file) {
+      setSelectedFile(file);
+      // Se il nome non è stato impostato manualmente, usa il nome del file
+      if (!formData.name) {
+        setFormData({
+          ...formData,
+          name: file.name.split('.')[0]
+        });
+      }
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileSelect(file);
     }
   };
 
@@ -657,6 +788,8 @@ const CMSHeadless = () => {
                     if (activeTab === 'entities') handleCreateEntity();
                     else if (activeTab === 'content' && entities.length > 0) {
                       handleCreateRecord(entities[0]);
+                    } else if (activeTab === 'media') {
+                      handleCreateMedia();
                     }
                   }}
                   className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2 shrink-0"
@@ -861,30 +994,64 @@ const CMSHeadless = () => {
 
           {/* Media Tab */}
           {activeTab === 'media' && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {media.map(item => (
-                <div key={item.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 group`}>
-                  <div className={`aspect-video ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                    {item.mimeType.startsWith('image/') ? (
-                      <span className="text-5xl">🖼️</span>
-                    ) : (
-                      <span className="text-5xl">📄</span>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {media.map(item => (
+                  <div key={item.id} className={`${bgContent} border ${borderColor} rounded-2xl p-5 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 group`}>
+                    <div className={`aspect-video ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                      {item.mimeType.startsWith('image/') ? (
+                        <span className="text-5xl">🖼️</span>
+                      ) : (
+                        <span className="text-5xl">📄</span>
+                      )}
+                    </div>
+                    <p className={`font-medium truncate ${textPrimary} text-lg`}>{item.name || item.filename}</p>
+                    <p className={`text-xs ${textSecondary} mt-1`}>
+                      {(item.size / 1024 / 1024).toFixed(2)} MB • {item.mimeType.split('/')[1] || item.mimeType}
+                    </p>
+                    {item.altText && (
+                      <p className={`text-xs ${textSecondary} mt-1 truncate`}>
+                        Alt: {item.altText}
+                      </p>
                     )}
+                    <div className="mt-4 flex justify-end space-x-2">
+                      <button 
+                        onClick={() => {
+                          setEditingItem(item);
+                          setFormData({
+                            name: item.name || item.filename,
+                            altText: item.altText || '',
+                            description: item.description || ''
+                          });
+                          setModalType('media');
+                          setShowModal(true);
+                        }}
+                        className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium"
+                      >
+                        Dettagli
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteMedia(item.id)}
+                        className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium"
+                      >
+                        Elimina
+                      </button>
+                    </div>
                   </div>
-                  <p className={`font-medium truncate ${textPrimary} text-lg`}>{item.filename}</p>
-                  <p className={`text-xs ${textSecondary} mt-1`}>
-                    {(item.size / 1024 / 1024).toFixed(2)} MB • {item.mimeType.split('/')[1]}
-                  </p>
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <button className="px-4 py-2 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl transition-all text-sm font-medium">
-                      Dettagli
-                    </button>
-                    <button className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium">
-                      Elimina
-                    </button>
-                  </div>
+                ))}
+              </div>
+
+              {media.length === 0 && (
+                <div className={`text-center py-12 ${bgContent} border ${borderColor} rounded-2xl`}>
+                  <p className={`text-lg ${textSecondary} mb-4`}>Nessun media trovato</p>
+                  <button
+                    onClick={handleCreateMedia}
+                    className="bg-linear-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
+                  >
+                    Carica il tuo primo media
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
@@ -1083,6 +1250,8 @@ const CMSHeadless = () => {
         title={
           modalType === 'entity' 
             ? (editingItem ? 'Modifica Entità' : 'Nuova Entità')
+            : modalType === 'media'
+            ? (editingItem ? 'Modifica Media' : 'Nuovo Media')
             : (editingItem ? 'Modifica Record' : 'Nuovo Record')
         }
         darkMode={darkMode}
@@ -1239,6 +1408,127 @@ const CMSHeadless = () => {
                 className="px-5 py-2.5 bg-linear-to-r from-blue-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 transition-all duration-200"
               >
                 {editingItem ? 'Aggiorna Entità' : 'Crea Entità'}
+              </button>
+            </div>
+          </div>
+        ) : modalType === 'media' ? (
+          <div className="space-y-6">
+            {/* Informazioni media */}
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                  Nome *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
+                  placeholder="es. Immagine hero"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                  Testo Alternativo (alt)
+                </label>
+                <input
+                  type="text"
+                  value={formData.altText || ''}
+                  onChange={(e) => setFormData({ ...formData, altText: e.target.value })}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
+                  placeholder="Descrizione per accessibilità"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                  Descrizione
+                </label>
+                <textarea
+                  rows="3"
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className={`w-full px-4 py-3 border ${darkMode ? 'border-gray-600 bg-gray-700/50 text-white' : 'border-gray-200 bg-white/50 text-gray-900'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
+                  placeholder="Descrizione dettagliata del media"
+                />
+              </div>
+
+              {/* Area upload file */}
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
+                  File *
+                </label>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+                    isDragging 
+                      ? 'border-blue-500 bg-blue-500/10' 
+                      : darkMode 
+                        ? 'border-gray-600 hover:border-gray-500' 
+                        : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onClick={() => document.getElementById('fileInput').click()}
+                >
+                  <input
+                    id="fileInput"
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => handleFileSelect(e.target.files[0])}
+                  />
+                  <div className="flex flex-col items-center space-y-3">
+                    <span className="text-5xl">📁</span>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {selectedFile ? selectedFile.name : 'Trascina un file qui o clicca per selezionare'}
+                    </p>
+                    {selectedFile && (
+                      <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB - {selectedFile.type}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Barra di progresso upload */}
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Caricamento...</span>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={`flex justify-end space-x-3 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className={`px-5 py-2.5 border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-xl text-sm font-medium transition-all`}
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveMedia}
+                disabled={!selectedFile || !formData.name || uploadProgress > 0}
+                className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  !selectedFile || !formData.name || uploadProgress > 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-linear-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105'
+                }`}
+              >
+                {editingItem ? 'Aggiorna Media' : 'Carica Media'}
               </button>
             </div>
           </div>

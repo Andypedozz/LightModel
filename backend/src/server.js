@@ -3,10 +3,10 @@ import express from "express"
 import cors from "cors"
 import { registerEntityRoutes } from "./entities/entityRoutes.js"
 import { registerEntityManagementRoutes } from "./entities/entityManagementRoutes.js"
+import { registerMediaManagementRoutes } from "./media/mediaManagementRoutes.js"
 import { ensureEntityTables } from "./db/db.js"
 
 const PORT = 3000;
-const __dirname = process.cwd();
 
 const app = express();
 
@@ -25,6 +25,7 @@ app.get("/api/health", (req, res) => {
 
 // Route per la gestione delle entità (deve venire prima delle route dinamiche)
 registerEntityManagementRoutes(app);
+registerMediaManagementRoutes(app);
 
 // Route dinamiche per le entità esistenti
 await registerEntityRoutes(app);
